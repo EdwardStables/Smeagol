@@ -3,3 +3,7 @@ bin
 obj
 Makefile
 build
+CMakeCache.txt
+CMakeFiles
+Smeagol
+cmake_install.cmake
