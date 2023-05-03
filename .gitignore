@@ -5,5 +5,5 @@ Makefile
 build
 CMakeCache.txt
 CMakeFiles
-Smeagol
+smeagol
 cmake_install.cmake
