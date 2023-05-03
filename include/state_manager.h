@@ -10,14 +10,13 @@
 #include "state.h"
 #include "inputs.h"
 
-class StateManager {
+struct StateManager {
     StateID next_state_id = 0;
     InputID next_input_id = 0;
     std::unordered_map<StateID,StateBase> states;
     std::unordered_map<InputID,InputBase> inputs;
     std::unordered_map<StateID,Transition> transitions;
 
-public:
     StateID add_state(std::string name);
     InputID add_input(std::string name);
     void connect(StateID initial, StateID result, InputID input);
