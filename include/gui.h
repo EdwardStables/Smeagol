@@ -1,12 +1,14 @@
 #pragma once
 
 #include "olcPixelGameEngine.h"
+#include "state_manager.h"
 
-class SmeagolGUI : public olc::PixelGameEngine
-{
+class SmeagolGUI : public olc::PixelGameEngine {
+
+    StateManager& sm;
+
 public:
-    SmeagolGUI()
-    {
+    SmeagolGUI(StateManager& sm) : sm(sm) {
         sAppName = "Smeagol";
     }
 public:
@@ -14,4 +16,4 @@ public:
     bool OnUserUpdate(float fElapsedTime) override;
 };
 
-void run_gui();
+void run_gui(StateManager& sm);

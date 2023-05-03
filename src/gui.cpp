@@ -9,12 +9,15 @@ bool SmeagolGUI::OnUserCreate() {
 bool SmeagolGUI::OnUserUpdate(float fElapsedTime) {
     // Clear Screen
     Clear(olc::BLACK);
+
+    DrawString({0,0}, sm.summary_string());
+
     return true;
 }
 
-void run_gui()
+void run_gui(StateManager& sm)
 {
-    SmeagolGUI gui;
+    SmeagolGUI gui(sm);
     if(gui.Construct(800, 400, 2, 2))
         gui.Start();
 }

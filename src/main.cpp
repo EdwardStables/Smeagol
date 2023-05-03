@@ -8,10 +8,6 @@
 int main(int argc, char **argv) {
     Config config(argc, argv); 
 
-    if (config.run_gui){
-        run_gui();
-    }
-
     StateManager sm;
 
     StateID one = sm.add_state("State 1");
@@ -24,7 +20,11 @@ int main(int argc, char **argv) {
     sm.connect(one, two, b);
     sm.connect(one, three, a);
 
-    std::cout << sm.summary_string() << std::endl;
+    if (config.run_gui){
+        run_gui(sm);
+    } else {
+        std::cout << sm.summary_string() << std::endl;
+    }
     
     return 0;
 }
