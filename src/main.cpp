@@ -1,8 +1,12 @@
 #include <iostream> 
 
 #include "state_manager.h"
+#include "config.h"
+    
 
-int main() {
+int main(int argc, char **argv) {
+    Config config(argc, argv); 
+
     StateManager sm;
 
     StateID one = sm.add_state("State 1");
