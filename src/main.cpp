@@ -2,10 +2,15 @@
 
 #include "state_manager.h"
 #include "config.h"
-    
+#include "olcPixelGameEngine.h"
+#include "gui.h"
 
 int main(int argc, char **argv) {
     Config config(argc, argv); 
+
+    if (config.run_gui){
+        run_gui();
+    }
 
     StateManager sm;
 
