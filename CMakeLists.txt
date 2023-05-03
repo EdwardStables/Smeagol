@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(Smeagol)
+project(smeagol)
 
 set(C_CXX_SOURCES_DIR "src")
 set(C_CXX_HEADERS_DIR "include")
