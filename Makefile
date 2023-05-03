@@ -1,6 +1,6 @@
-CC := g++
+CC := g++-11
 CXX ?= $(CC)
-CFLAGS := -Wall -Wextra -Werror
+CFLAGS := -Wall -Wextra -Werror -std=c++20
 CXXFLAGS := $(CFLAGS)
 DBGFLAGS := -g
 COBJFLAGS := $(CFLAGS) -c
@@ -37,7 +37,7 @@ default: makedir all
 $(TARGET): $(OBJ)
 	$(CC) -o $@ $(OBJ) $(CFLAGS) -I $(INC_PATH)
 
-$(OBJ_PATH)/%.o: $(SRC_PATH)/%.c*
+$(OBJ_PATH)/%.o: $(SRC_PATH)/%.c* $(INC_PATH)/*.h*
 	$(CC) $(COBJFLAGS) -o $@ $< -I $(INC_PATH)
 
 $(DBG_PATH)/%.o: $(SRC_PATH)/%.c*
