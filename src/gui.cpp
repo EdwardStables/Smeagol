@@ -1,4 +1,5 @@
 #include "gui.h"
+#include "layout.h"
 
 void GUIState::draw(olc::PixelGameEngine& pge){
     pge.DrawCircle(pos, radius);
@@ -7,14 +8,13 @@ void GUIState::draw(olc::PixelGameEngine& pge){
 
 bool SmeagolGUI::OnUserCreate() {
     for (const auto &[id, state] : sm.states){
-        states.push_back(GUIState({0,0}, 20, state));
+        states.insert({id, GUIState({0,0}, 20, state)});
     }
 
+    Layout layout(sm, 3.0f*states.begin()->second.radius, state_zone_size.x, state_zone_size.y);
 
-    olc::vf2d offs = {0,0};
-    for (auto &state : states){
-        state.pos += offs;
-        offs += {100,100};
+    for (auto &[id, state] : states){
+        state.pos = layout.pos(id);
     }
 
     return true;
@@ -26,9 +26,20 @@ bool SmeagolGUI::OnUserUpdate(float fElapsedTime) {
     // Clear Screen
     Clear(olc::BLACK);
 
-    for (auto &state : states){
+    olc::Sprite state_canvas(state_zone_size.x, state_zone_size.y);
+    SetDrawTarget(&state_canvas);
+    for (auto &[id, state] : states){
         state.draw(*this);
+
+        for (const auto &[input_id, target_ids] : sm.transitions.at(id)){
+            for (const auto &target_id: target_ids){
+                DrawLine(state.pos, states.at(target_id).pos);
+            }
+        }
     }
+    SetDrawTarget(nullptr);
+    DrawSprite(state_zone_start, &state_canvas);
+    DrawRect(state_zone_start, state_zone_size);
 
     return true;
 }

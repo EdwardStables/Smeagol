@@ -22,7 +22,9 @@ struct GUIState {
 class SmeagolGUI : public olc::PixelGameEngine {
     StateManager& sm;
 
-    std::vector<GUIState> states;
+    std::unordered_map<StateID, GUIState> states;
+    olc::vi2d state_zone_start = {100, 0};
+    olc::vi2d state_zone_size = {699, 399};
 
 public:
     SmeagolGUI(StateManager& sm) : sm(sm) {
