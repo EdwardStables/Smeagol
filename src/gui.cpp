@@ -40,6 +40,14 @@ void ButtonPanel::update() {
         else
             b.draw_state = Button::SELECT;
 
+
+        if (pge.GetMouse(0).bPressed){
+            switch (ind-1) {
+                case 0:
+                    sm.add_state("Test");
+                    break;
+            }
+        }
     }
 }
 
@@ -97,6 +105,22 @@ void StateCanvas::update() {
             }
         }
     }
+
+    if (states.size() < sm.states.size()){
+        for (auto &[id, state] : sm.states){
+            if (!states.count(id)){
+                states.insert({id, GUIState({float(rand() % _size.x), float(rand() % _size.y)}, 20, state)});
+            }
+        }
+    }
+
+    if (states.size() > sm.states.size()){
+        for (auto &[id, state] : states){
+            if (!sm.states.count(id)){
+                //do the removal here
+            }
+        }
+    }
 }
 
 void StateCanvas::draw() {
@@ -117,15 +141,15 @@ void StateCanvas::draw() {
 }
 
 bool SmeagolGUI::OnUserCreate() {
-    for (const auto &[id, state] : sm.states){
-        states.insert({id, GUIState({0,0}, 20, state)});
-    }
+    //for (const auto &[id, state] : sm.states){
+    //    states.insert({id, GUIState({0,0}, 20, state)});
+    //}
 
-    Layout layout(sm, 3.0f*states.begin()->second.radius, sc.size().x, sc.size().y);
+    //Layout layout(sm, 3.0f*states.begin()->second.radius, sc.size().x, sc.size().y);
 
-    for (auto &[id, state] : states){
-        state.pos = layout.pos(id);
-    }
+    //for (auto &[id, state] : states){
+    //    state.pos = layout.pos(id);
+    //}
 
     return true;
 }
