@@ -8,13 +8,12 @@ void GUIState::draw(olc::PixelGameEngine& pge){
         case SELECT: colour = olc::DARK_YELLOW; break;
         default: colour = olc::WHITE; break;
     }
-    std::cout << state.id << " " << draw_state << std::endl;
     pge.DrawCircle(pos, radius, colour);
     pge.DrawString(pos, state.name);
 }
 
 bool GUIState::intersects(olc::vf2d test_pos){
-    bool res = (test_pos - pos).mag() < radius;
+    bool res = (test_pos - pos).mag() < radius - 0.1f;
     return res;
 }
 
@@ -31,8 +30,24 @@ void StateCanvas::update() {
     // Update    
     if (auto mpos = screen_to_canvas(pge.GetMousePos())){
         for (auto &[id, state] : states){
+            if (!(held_id == std::nullopt || held_id.value() == id)) continue;
+
+            if (state.draw_state == GUIState::SELECT &&
+                (mpos.value() - state.pos - state.grab_offset).mag2() > 0.01f)
+            {
+                state.pos = mpos.value() - state.grab_offset; 
+            }
+
+
             if (state.intersects(mpos.value())){
-                state.draw_state = GUIState::HOVER;
+                state.draw_state = pge.GetMouse(0).bHeld ? GUIState::SELECT : GUIState::HOVER;
+                if(pge.GetMouse(0).bPressed || state.draw_state == GUIState::SELECT){
+                    held_id = id;
+                    state.grab_offset = mpos.value() - state.pos;
+                } else if (pge.GetMouse(0).bReleased) {
+                    held_id = std::nullopt;
+                    state.grab_offset = state.pos;
+                }
             } else {
                 state.draw_state = GUIState::NONE;
             }

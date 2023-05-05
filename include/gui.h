@@ -11,6 +11,7 @@ struct GUIState {
     olc::vf2d pos;
     float radius;
     StateBase state;
+    olc::vf2d grab_offset;
     enum {NONE, HOVER, SELECT} draw_state = NONE;
 
     void draw(olc::PixelGameEngine& pge);    
@@ -18,6 +19,7 @@ struct GUIState {
 
     GUIState(olc::vf2d pos, float radius, StateBase state) :
         pos(pos),
+        grab_offset(pos),
         radius(radius),
         state(state)
     {}
@@ -29,6 +31,7 @@ class StateCanvas {
     std::unordered_map<StateID, GUIState>& states;
     const olc::vi2d _pos;
     const olc::vi2d _size;
+    std::optional<StateID> held_id = std::nullopt;
 public:
     StateCanvas(
         olc::PixelGameEngine& pge,
