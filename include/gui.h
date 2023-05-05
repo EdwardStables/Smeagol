@@ -25,6 +25,33 @@ struct GUIState {
     {}
 };
 
+struct Button {
+    std::string name;
+    enum {NONE, HOVER, SELECT} draw_state = NONE;
+};
+
+class ButtonPanel {
+    olc::PixelGameEngine& pge;
+    StateManager& sm;
+    const olc::vi2d _pos;
+    const olc::vi2d _size;
+    std::vector<Button> buttons;
+    const olc::vi2d margin = {5,5};
+public:
+    ButtonPanel (
+        olc::PixelGameEngine& pge,
+        StateManager& sm,
+        olc::vi2d pos,
+        olc::vi2d size
+    ) : pge(pge), sm(sm), _pos(pos), _size(size)
+    {
+        buttons.push_back({"Add State", Button::NONE});
+        buttons.push_back({"Remove State", Button::NONE});
+    }
+    void update();
+    void draw();
+};
+
 class StateCanvas {
     olc::PixelGameEngine& pge;
     StateManager& sm;
@@ -51,12 +78,14 @@ public:
 class SmeagolGUI : public olc::PixelGameEngine {
     StateManager& sm;
     StateCanvas sc;
+    ButtonPanel bp;
     std::unordered_map<StateID, GUIState> states;
 
 public:
     SmeagolGUI(StateManager& sm)
     : sm(sm),
-      sc(StateCanvas(*this, sm, {100,0}, {699, 399}, states))
+      sc(StateCanvas(*this, sm, {100,0}, {699, 399}, states)),
+      bp(ButtonPanel(*this, sm, {0,0}, {99, 399}))
     {
         sAppName = "Smeagol";
     }

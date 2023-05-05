@@ -17,6 +17,50 @@ bool GUIState::intersects(olc::vf2d test_pos){
     return res;
 }
 
+void ButtonPanel::update() {
+    olc::vi2d offs = {0, 12 + margin.y};
+    int ind = 0;
+    auto mpos = pge.GetMousePos();
+    for (auto &b : buttons){
+        olc::vi2d tl = _pos + margin + (ind*offs);
+        olc::vi2d br = tl + olc::vi2d{_size.x - 2*margin.x, 12};
+        ind++;
+        
+        if (mpos.x < tl.x
+            || mpos.y < tl.y
+            || mpos.x > br.x
+            || mpos.y > br.y)
+        {
+            b.draw_state = Button::NONE;
+            continue;
+        }
+
+        if (!pge.GetMouse(0).bHeld)
+            b.draw_state = Button::HOVER;
+        else
+            b.draw_state = Button::SELECT;
+
+    }
+}
+
+void ButtonPanel::draw() {
+    olc::vi2d offs = {0, 12 + margin.y};
+    int ind = 0;
+    for (const auto &b : buttons){
+        if (b.draw_state == Button::NONE){
+            pge.DrawRect(_pos + margin + (ind*offs), {_size.x - 2*margin.x, 12});
+        } else {
+            olc::Pixel colour = b.draw_state == Button::HOVER ? olc::GREY : olc::WHITE;
+            pge.FillRect(_pos + margin + (ind*offs), {_size.x - 2*margin.x, 12}, colour);
+        }
+        olc::Pixel text_colour = b.draw_state == Button::NONE ? olc::WHITE : olc::BLACK;
+        pge.DrawString(_pos + margin + (ind*offs) + olc::vi2d{2, 2}, b.name, text_colour);
+        ind++;
+    }
+
+    pge.DrawRect(_pos, _size);
+}
+
 std::optional<olc::vf2d> StateCanvas::screen_to_canvas(olc::vf2d screen_pos) {
     olc::vf2d offset = screen_pos - _pos;
 
@@ -92,7 +136,10 @@ bool SmeagolGUI::OnUserUpdate(float fElapsedTime) {
     // Drawing
     Clear(olc::BLACK);
     sc.update();
+    bp.update();
+
     sc.draw();
+    bp.draw();
 
     return true;
 }
