@@ -84,8 +84,8 @@ class SmeagolGUI : public olc::PixelGameEngine {
 public:
     SmeagolGUI(StateManager& sm)
     : sm(sm),
-      sc(StateCanvas(*this, sm, {100,0}, {699, 399}, states)),
-      bp(ButtonPanel(*this, sm, {0,0}, {99, 399}))
+      sc(StateCanvas(*this, sm, {200,0}, {699, 399}, states)),
+      bp(ButtonPanel(*this, sm, {0,0}, {199, 399}))
     {
         sAppName = "Smeagol";
     }
