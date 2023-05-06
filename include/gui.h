@@ -7,12 +7,16 @@
 #include "state.h"
 #include "inputs.h"
 
+enum e_mode {
+    NORMAL, DELETE_STATE
+};
+
 struct GUIState {
     olc::vf2d pos;
     float radius;
     StateBase state;
     olc::vf2d grab_offset;
-    enum {NONE, HOVER, SELECT} draw_state = NONE;
+    enum {NONE, DELETE_HOVER, HOVER, SELECT} draw_state = NONE;
 
     void draw(olc::PixelGameEngine& pge);    
     bool intersects(olc::vf2d test_pos);
@@ -51,6 +55,7 @@ struct Button {
 
 class ButtonPanel {
     olc::PixelGameEngine& pge;
+    e_mode& mode;
     StateManager& sm;
     const olc::vi2d _pos;
     const olc::vi2d _size;
@@ -59,10 +64,11 @@ class ButtonPanel {
 public:
     ButtonPanel (
         olc::PixelGameEngine& pge,
+        e_mode& mode,
         StateManager& sm,
         olc::vi2d pos,
         olc::vi2d size
-    ) : pge(pge), sm(sm), _pos(pos), _size(size)
+    ) : pge(pge), mode(mode), sm(sm), _pos(pos), _size(size)
     {
         std::vector<std::pair<std::string,Button::e_button_type>> button_contents = {
             {"Add State", Button::MOMENTRY},
@@ -82,6 +88,7 @@ public:
 
 class StateCanvas {
     olc::PixelGameEngine& pge;
+    e_mode& mode;
     StateManager& sm;
     std::unordered_map<StateID, GUIState>& states;
     const olc::vi2d _pos;
@@ -90,11 +97,12 @@ class StateCanvas {
 public:
     StateCanvas(
         olc::PixelGameEngine& pge,
+        e_mode& mode,
         StateManager& sm,
         olc::vi2d pos,
         olc::vi2d size,
         std::unordered_map<StateID, GUIState>& states
-    ) : pge(pge), sm(sm), _pos(pos), _size(size), states(states)
+    ) : pge(pge), mode(mode), sm(sm), _pos(pos), _size(size), states(states)
     {}
     void update();
     void draw() const;
@@ -107,13 +115,14 @@ class SmeagolGUI : public olc::PixelGameEngine {
     StateManager& sm;
     StateCanvas sc;
     ButtonPanel bp;
+    e_mode mode = NORMAL;
     std::unordered_map<StateID, GUIState> states;
 
 public:
     SmeagolGUI(StateManager& sm)
     : sm(sm),
-      sc(StateCanvas(*this, sm, {200,0}, {599, 399}, states)),
-      bp(ButtonPanel(*this, sm, {0,0}, {199, 399}))
+      sc(StateCanvas(*this, mode, sm, {200,0}, {599, 399}, states)),
+      bp(ButtonPanel(*this, mode, sm, {0,0}, {199, 399}))
     {
         sAppName = "Smeagol";
     }

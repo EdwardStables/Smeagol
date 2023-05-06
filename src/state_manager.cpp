@@ -7,6 +7,23 @@ StateID StateManager::add_state(std::string name){
     return id;
 }
 
+void StateManager::delete_state(StateID id){
+    if (!states.count(id)) return;
+    states.erase(id);
+
+    if (transitions.count(id)){
+        transitions.erase(id);
+    }
+
+    for (auto &[first, transition] : transitions){
+        for (auto &[input, end_set] : transition){
+            if (end_set.count(id)){
+                end_set.erase(id);
+            }
+        }
+    }
+}
+
 InputID StateManager::add_input(std::string name){
     InputID id = next_input_id++;
     inputs.insert({id, InputBase(name, id)});

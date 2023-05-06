@@ -18,6 +18,7 @@ struct StateManager {
     std::unordered_map<StateID,Transition> transitions;
 
     StateID add_state(std::string name);
+    void delete_state(StateID id);
     InputID add_input(std::string name);
     void connect(StateID initial, StateID result, InputID input);
     std::string summary_string();

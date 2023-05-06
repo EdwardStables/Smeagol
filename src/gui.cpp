@@ -1,13 +1,23 @@
 #include "gui.h"
 #include "layout.h"
+#include <math.h>
 
 void GUIState::draw(olc::PixelGameEngine& pge){
     olc::Pixel colour;
     switch (draw_state){
+        case DELETE_HOVER: colour = olc::RED; break;
         case HOVER: colour = olc::YELLOW; break;
         case SELECT: colour = olc::DARK_YELLOW; break;
         default: colour = olc::WHITE; break;
     }
+    
+    if (draw_state == DELETE_HOVER){
+        olc::vf2d ofs1 = {radius / sqrt(2), radius / sqrt(2)};
+        olc::vf2d ofs2 = {radius / sqrt(2), -radius / sqrt(2)};
+        pge.DrawLine(pos - ofs1, pos + ofs1, colour);
+        pge.DrawLine(pos - ofs2, pos + ofs2, colour);
+    }
+
     pge.DrawCircle(pos, radius, colour);
     pge.DrawString(pos, state.name);
 }
@@ -35,8 +45,9 @@ void Button::update() {
             }
         } else {
             draw_state = pge.GetMouse(0).bHeld ? SELECT : HOVER;
-            button_pressed = pge.GetMouse(0).bPressed;
         }
+
+        button_pressed = pge.GetMouse(0).bPressed;
     }
     else {
         if (type == MOMENTRY ||
@@ -80,6 +91,8 @@ void ButtonPanel::update() {
             case 0:
                 sm.add_state("Test");
                 break;
+            case 1:
+                mode = b.draw_state == Button::SELECT ? DELETE_STATE : NORMAL;
         }
 
         //go through and deactivate all the other buttons
@@ -110,26 +123,43 @@ void StateCanvas::update() {
     // Update    
     if (auto mpos = screen_to_canvas(pge.GetMousePos())){
         for (auto &[id, state] : states){
-            if (!(held_id == std::nullopt || held_id.value() == id)) continue;
+            switch (mode) {
+                case DELETE_STATE: {
+                    if (state.intersects(mpos.value())){
+                        state.draw_state = GUIState::DELETE_HOVER;
 
-            if (state.draw_state == GUIState::SELECT &&
-                (mpos.value() - state.pos - state.grab_offset).mag2() > 0.01f)
-            {
-                state.pos = mpos.value() - state.grab_offset; 
-            }
-
-
-            if (state.intersects(mpos.value())){
-                state.draw_state = pge.GetMouse(0).bHeld ? GUIState::SELECT : GUIState::HOVER;
-                if(pge.GetMouse(0).bPressed || state.draw_state == GUIState::SELECT){
-                    held_id = id;
-                    state.grab_offset = mpos.value() - state.pos;
-                } else if (pge.GetMouse(0).bReleased) {
-                    held_id = std::nullopt;
-                    state.grab_offset = state.pos;
+                        if(pge.GetMouse(0).bPressed){
+                            sm.delete_state(id);
+                        }
+                    } else {
+                        state.draw_state = GUIState::NONE;
+                    }
+                    break;
                 }
-            } else {
-                state.draw_state = GUIState::NONE;
+                case NORMAL: {
+                    if (!(held_id == std::nullopt || held_id.value() == id)) continue;
+
+                    if (state.draw_state == GUIState::SELECT &&
+                        (mpos.value() - state.pos - state.grab_offset).mag2() > 0.01f)
+                    {
+                        state.pos = mpos.value() - state.grab_offset; 
+                    }
+
+
+                    if (state.intersects(mpos.value())){
+                        state.draw_state = pge.GetMouse(0).bHeld ? GUIState::SELECT : GUIState::HOVER;
+                        if(pge.GetMouse(0).bPressed || state.draw_state == GUIState::SELECT){
+                            held_id = id;
+                            state.grab_offset = mpos.value() - state.pos;
+                        } else if (pge.GetMouse(0).bReleased) {
+                            held_id = std::nullopt;
+                            state.grab_offset = state.pos;
+                        }
+                    } else {
+                        state.draw_state = GUIState::NONE;
+                    }
+                    break;
+                }
             }
         }
     }
@@ -144,10 +174,14 @@ void StateCanvas::update() {
     }
 
     if (states.size() > sm.states.size()){
+        std::vector<StateID> to_rm;
         for (auto &[id, state] : states){
             if (!sm.states.count(id)){
-                //do the removal here
+                to_rm.push_back(id);
             }
+        }
+        for (auto &id : to_rm){
+            states.erase(id);
         }
     }
 }
