@@ -109,7 +109,8 @@ void StateCanvas::update() {
     if (states.size() < sm.states.size()){
         for (auto &[id, state] : sm.states){
             if (!states.count(id)){
-                states.insert({id, GUIState({float(rand() % _size.x), float(rand() % _size.y)}, 20, state)});
+                olc::vf2d new_pos = {float(rand() % _size.x), float(rand() % _size.y)};
+                states.insert({id, GUIState(new_pos, 20, state)});
             }
         }
     }
