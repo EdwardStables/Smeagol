@@ -11,6 +11,10 @@ void GUIState::draw(olc::PixelGameEngine& pge){
         default: colour = olc::WHITE; break;
     }
     
+
+    pge.FillCircle(pos, radius, olc::BLACK);
+    pge.DrawCircle(pos, radius, colour);
+
     if (draw_state == DELETE_HOVER){
         olc::vf2d ofs1 = {radius / sqrt(2), radius / sqrt(2)};
         olc::vf2d ofs2 = {radius / sqrt(2), -radius / sqrt(2)};
@@ -18,7 +22,6 @@ void GUIState::draw(olc::PixelGameEngine& pge){
         pge.DrawLine(pos - ofs2, pos + ofs2, colour);
     }
 
-    pge.DrawCircle(pos, radius, colour);
     pge.DrawString(pos, state.name);
 }
 
@@ -88,11 +91,16 @@ void ButtonPanel::update() {
         }
 
         switch (ind) {
-            case 0:
+            case 0: //Add State
+                mode = NORMAL;
                 sm.add_state("Test");
                 break;
-            case 1:
+            case 1: //Remove State
                 mode = b.draw_state == Button::SELECT ? DELETE_STATE : NORMAL;
+                break;
+            case 2: //Connect State
+                mode = b.draw_state == Button::SELECT ? CONNECT_STATE : NORMAL;
+                break;
         }
 
         //go through and deactivate all the other buttons
@@ -116,7 +124,7 @@ void ButtonPanel::draw() const {
     pge.DrawRect(_pos, _size);
 }
 
-std::optional<olc::vf2d> StateCanvas::screen_to_canvas(olc::vf2d screen_pos) {
+std::optional<olc::vf2d> StateCanvas::screen_to_canvas(olc::vf2d screen_pos) const {
     olc::vf2d offset = screen_pos - _pos;
 
     if (offset.x < 0.0f || offset.y < 0.0f) return std::nullopt;
@@ -127,9 +135,36 @@ std::optional<olc::vf2d> StateCanvas::screen_to_canvas(olc::vf2d screen_pos) {
 
 void StateCanvas::update() {
     // Update    
+
+    if (mode != CONNECT_STATE){
+        connection_mode_start = std::nullopt;
+    }
+
     if (auto mpos = screen_to_canvas(pge.GetMousePos())){
         for (auto &[id, state] : states){
             switch (mode) {
+                case CONNECT_STATE: {
+                    if (state.intersects(mpos.value())){
+                        state.draw_state = GUIState::HOVER;
+
+                        if(pge.GetMouse(0).bPressed){
+                            if (!connection_mode_start){ //first node
+                                connection_mode_start = id;
+                            } else if (id != connection_mode_start.value()) {  //second node
+                                InputID a = sm.add_input("test_connection");
+                                sm.connect(connection_mode_start.value(), id, a);
+                                states.at(connection_mode_start.value()).draw_state = GUIState::NONE;
+                                state.draw_state = GUIState::NONE;
+                                connection_mode_start = std::nullopt;
+
+                            }
+                        }
+                    } else {
+                        if (!(connection_mode_start && connection_mode_start.value() == id))
+                            state.draw_state = GUIState::NONE;
+                    }
+                    break;
+                }
                 case DELETE_STATE: {
                     if (state.intersects(mpos.value())){
                         state.draw_state = GUIState::DELETE_HOVER;
@@ -195,15 +230,26 @@ void StateCanvas::update() {
 void StateCanvas::draw() const {
     olc::Sprite state_canvas(_size.x, _size.y);
     pge.SetDrawTarget(&state_canvas);
-    for (auto &[id, state] : states){
-        state.draw(pge);
 
+    if (mode == CONNECT_STATE && connection_mode_start){
+        auto target = screen_to_canvas(pge.GetMousePos());
+        if (target){
+            pge.DrawLine(states.at(connection_mode_start.value()).pos, target.value());
+        }
+    }
+
+    for (auto &[id, state] : states){
         for (const auto &[input_id, target_ids] : sm.transitions.at(id)){
             for (const auto &target_id: target_ids){
                 pge.DrawLine(state.pos, states.at(target_id).pos);
             }
         }
     }
+
+    for (auto &[id, state] : states){
+        state.draw(pge);
+    }
+
     pge.SetDrawTarget(nullptr);
     pge.DrawSprite(_pos, &state_canvas);
     pge.DrawRect(_pos, _size);

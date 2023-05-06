@@ -8,7 +8,7 @@
 #include "inputs.h"
 
 enum e_mode {
-    NORMAL, DELETE_STATE
+    NORMAL, DELETE_STATE, CONNECT_STATE
 };
 
 struct GUIState {
@@ -72,7 +72,8 @@ public:
     {
         std::vector<std::pair<std::string,Button::e_button_type>> button_contents = {
             {"Add State", Button::MOMENTRY},
-            {"Remove Mode", Button::TOGGLE}
+            {"Remove Mode", Button::TOGGLE},
+            {"Connect Mode", Button::TOGGLE}
         };
         olc::vi2d offs = {0, 12 + margin.y};
         int ind = 0;
@@ -93,7 +94,10 @@ class StateCanvas {
     std::unordered_map<StateID, GUIState>& states;
     const olc::vi2d _pos;
     const olc::vi2d _size;
+
     std::optional<StateID> held_id = std::nullopt;
+    std::optional<StateID> connection_mode_start = std::nullopt;
+
 public:
     StateCanvas(
         olc::PixelGameEngine& pge,
@@ -108,7 +112,7 @@ public:
     void draw() const;
     olc::vf2d size() {return _size;}
     olc::vf2d pos() {return _pos;}
-    std::optional<olc::vf2d> screen_to_canvas(olc::vf2d screen_pos);
+    std::optional<olc::vf2d> screen_to_canvas(olc::vf2d screen_pos) const;
 };
 
 class SmeagolGUI : public olc::PixelGameEngine {
