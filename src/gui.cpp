@@ -96,6 +96,12 @@ void ButtonPanel::update() {
         }
 
         //go through and deactivate all the other buttons
+        int ind2 = 0;
+        for (auto &b2 : buttons){
+            if (ind == ind2++) continue;
+
+            b2.draw_state = Button::NONE;
+        }
         break;
     }
 }
