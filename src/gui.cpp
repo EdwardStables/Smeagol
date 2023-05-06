@@ -257,6 +257,20 @@ void StateCanvas::draw() const {
             auto p2 = states.at(id2).pos;
             pge.DrawLine(p1, p2);
             pge.DrawString(p1 + (p2-p1)/2 - pge.GetTextSize(label)/2, label);
+
+            auto po = p2 + (p1 - p2).norm() * states.at(id2).radius;
+
+            auto perp = (po - p1).norm();
+            perp = olc::vf2d{perp.y, -perp.x}.norm();
+
+            auto p3 = p1 + perp*(po - p1).mag();
+            auto p3vec = (p3 - po).norm()*10;
+            pge.DrawLine(po, po+p3vec);
+
+            auto p4 = p1 - perp*(po - p1).mag();
+            auto p4vec = (p4 - po).norm()*10;
+            pge.DrawLine(po, po+p4vec);
+
         }
     }
 
