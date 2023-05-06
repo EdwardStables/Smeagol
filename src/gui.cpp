@@ -22,7 +22,8 @@ void GUIState::draw(olc::PixelGameEngine& pge){
         pge.DrawLine(pos - ofs2, pos + ofs2, colour);
     }
 
-    pge.DrawString(pos, state.name);
+    auto string_size = pge.GetTextSize(state.name);
+    pge.DrawString(pos - string_size/2, state.name);
 }
 
 bool GUIState::intersects(olc::vf2d test_pos){
@@ -239,10 +240,23 @@ void StateCanvas::draw() const {
     }
 
     for (auto &[id, state] : states){
+        std::unordered_map<StateID,std::string> connection;
         for (const auto &[input_id, target_ids] : sm.transitions.at(id)){
             for (const auto &target_id: target_ids){
-                pge.DrawLine(state.pos, states.at(target_id).pos);
+                if (connection.count(target_id)){
+                    std::string var = connection[target_id] + "," + sm.inputs.at(input_id).name;
+                    connection[target_id] = var;
+                } else {
+                    connection[target_id] = sm.inputs.at(input_id).name;
+                }
             }
+        }
+
+        for (const auto &[id2, label]: connection){
+            auto p1 = state.pos;
+            auto p2 = states.at(id2).pos;
+            pge.DrawLine(p1, p2);
+            pge.DrawString(p1 + (p2-p1)/2 - pge.GetTextSize(label)/2, label);
         }
     }
 
