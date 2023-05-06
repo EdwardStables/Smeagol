@@ -26,8 +26,27 @@ struct GUIState {
 };
 
 struct Button {
+    enum e_button_type {TOGGLE, MOMENTRY};
+
     std::string name;
+    olc::PixelGameEngine& pge;
+    const olc::vi2d _pos;
+    const olc::vi2d _size;
+    e_button_type type;
     enum {NONE, HOVER, SELECT} draw_state = NONE;
+    bool button_pressed = false;
+
+    Button(
+        olc::PixelGameEngine& pge,
+        olc::vi2d pos,
+        olc::vi2d size,
+        std::string name,
+        e_button_type type
+    ) : name(name), pge(pge), _pos(pos), _size(size), type(type) {}
+
+    void update();
+    void draw() const;
+    bool register_update();
 };
 
 class ButtonPanel {
@@ -45,11 +64,20 @@ public:
         olc::vi2d size
     ) : pge(pge), sm(sm), _pos(pos), _size(size)
     {
-        buttons.push_back({"Add State", Button::NONE});
-        buttons.push_back({"Remove State", Button::NONE});
+        std::vector<std::pair<std::string,Button::e_button_type>> button_contents = {
+            {"Add State", Button::MOMENTRY},
+            {"Remove Mode", Button::TOGGLE}
+        };
+        olc::vi2d offs = {0, 12 + margin.y};
+        int ind = 0;
+        for (const auto &[name, type] : button_contents){
+            buttons.push_back(Button(pge, _pos + margin + (ind*offs), {_size.x - 2*margin.x, 12}, name, type));
+            ind++;
+        }
+
     }
     void update();
-    void draw();
+    void draw() const;
 };
 
 class StateCanvas {
@@ -69,7 +97,7 @@ public:
     ) : pge(pge), sm(sm), _pos(pos), _size(size), states(states)
     {}
     void update();
-    void draw();
+    void draw() const;
     olc::vf2d size() {return _size;}
     olc::vf2d pos() {return _pos;}
     std::optional<olc::vf2d> screen_to_canvas(olc::vf2d screen_pos);

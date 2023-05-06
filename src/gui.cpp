@@ -17,53 +17,81 @@ bool GUIState::intersects(olc::vf2d test_pos){
     return res;
 }
 
-void ButtonPanel::update() {
-    olc::vi2d offs = {0, 12 + margin.y};
-    int ind = 0;
+void Button::update() {
+    olc::vi2d tl = _pos;
+    olc::vi2d br = tl + _size;
+    
     auto mpos = pge.GetMousePos();
-    for (auto &b : buttons){
-        olc::vi2d tl = _pos + margin + (ind*offs);
-        olc::vi2d br = tl + olc::vi2d{_size.x - 2*margin.x, 12};
-        ind++;
-        
-        if (mpos.x < tl.x
-            || mpos.y < tl.y
-            || mpos.x > br.x
-            || mpos.y > br.y)
-        {
-            b.draw_state = Button::NONE;
-            continue;
-        }
+    
+    if (mpos.x > tl.x && mpos.x < br.x
+        && mpos.y > tl.y && mpos.y < br.y)
+    {
+        if (type == TOGGLE) {
+            if (draw_state == NONE) draw_state = HOVER;
 
-        if (!pge.GetMouse(0).bHeld)
-            b.draw_state = Button::HOVER;
-        else
-            b.draw_state = Button::SELECT;
-
-
-        if (pge.GetMouse(0).bPressed){
-            switch (ind-1) {
-                case 0:
-                    sm.add_state("Test");
-                    break;
+            if (pge.GetMouse(0).bPressed){
+                draw_state = draw_state == HOVER ? SELECT : HOVER;
+                button_pressed = draw_state == SELECT;
             }
+        } else {
+            draw_state = pge.GetMouse(0).bHeld ? SELECT : HOVER;
+            button_pressed = pge.GetMouse(0).bPressed;
+        }
+    }
+    else {
+        if (type == MOMENTRY ||
+            type == TOGGLE && draw_state != SELECT) {
+            draw_state = Button::NONE;
         }
     }
 }
 
-void ButtonPanel::draw() {
+bool Button::register_update() {
+    bool val = button_pressed;
+    button_pressed = false;
+    return val;
+}
+
+void Button::draw() const {
+    if (draw_state == Button::NONE){
+        pge.DrawRect(_pos, _size);
+    } else {
+        olc::Pixel colour = draw_state == Button::HOVER ? olc::WHITE : olc::GREY;
+        pge.FillRect(_pos, _size, colour);
+    }
+    olc::Pixel text_colour = draw_state == Button::NONE ? olc::WHITE : olc::BLACK;
+    pge.DrawString(_pos + olc::vi2d{2, 2}, name, text_colour);
+}
+
+void ButtonPanel::update() {
+    olc::vi2d offs = {0, 12 + margin.y};
+    int ind = 0;
+
+    for (auto &b : buttons){
+        b.update();
+        bool activate = b.register_update();
+
+        if (!activate){
+            ind++;
+            continue;
+        }
+
+        switch (ind) {
+            case 0:
+                sm.add_state("Test");
+                break;
+        }
+
+        //go through and deactivate all the other buttons
+        break;
+    }
+}
+
+void ButtonPanel::draw() const {
     olc::vi2d offs = {0, 12 + margin.y};
     int ind = 0;
     for (const auto &b : buttons){
-        if (b.draw_state == Button::NONE){
-            pge.DrawRect(_pos + margin + (ind*offs), {_size.x - 2*margin.x, 12});
-        } else {
-            olc::Pixel colour = b.draw_state == Button::HOVER ? olc::GREY : olc::WHITE;
-            pge.FillRect(_pos + margin + (ind*offs), {_size.x - 2*margin.x, 12}, colour);
-        }
-        olc::Pixel text_colour = b.draw_state == Button::NONE ? olc::WHITE : olc::BLACK;
-        pge.DrawString(_pos + margin + (ind*offs) + olc::vi2d{2, 2}, b.name, text_colour);
-        ind++;
+        b.draw();
     }
 
     pge.DrawRect(_pos, _size);
@@ -124,7 +152,7 @@ void StateCanvas::update() {
     }
 }
 
-void StateCanvas::draw() {
+void StateCanvas::draw() const {
     olc::Sprite state_canvas(_size.x, _size.y);
     pge.SetDrawTarget(&state_canvas);
     for (auto &[id, state] : states){
