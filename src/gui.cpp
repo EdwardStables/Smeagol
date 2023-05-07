@@ -16,8 +16,8 @@ void GUIState::draw(olc::PixelGameEngine& pge){
     pge.DrawCircle(pos, radius, colour);
 
     if (draw_state == DELETE_HOVER){
-        olc::vf2d ofs1 = {radius / sqrt(2), radius / sqrt(2)};
-        olc::vf2d ofs2 = {radius / sqrt(2), -radius / sqrt(2)};
+        olc::vf2d ofs1 = {radius / float(sqrt(2)), radius / float(sqrt(2))};
+        olc::vf2d ofs2 = {radius / float(sqrt(2)), -radius / float(sqrt(2))};
         pge.DrawLine(pos - ofs1, pos + ofs1, colour);
         pge.DrawLine(pos - ofs2, pos + ofs2, colour);
     }
