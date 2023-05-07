@@ -35,7 +35,7 @@ void Button::update() {
     olc::vi2d tl = _pos;
     olc::vi2d br = tl + _size;
     
-    auto mpos = pge.GetMousePos();
+    auto mpos = pge.GetMousePos() + mpos_offset;
     
     if (mpos.x > tl.x && mpos.x < br.x
         && mpos.y > tl.y && mpos.y < br.y)
@@ -79,7 +79,6 @@ void Button::draw() const {
 }
 
 void ButtonPanel::update() {
-    olc::vi2d offs = {0, 12 + margin.y};
     int ind = 0;
 
     for (auto &b : buttons){
@@ -116,13 +115,77 @@ void ButtonPanel::update() {
 }
 
 void ButtonPanel::draw() const {
-    olc::vi2d offs = {0, 12 + margin.y};
-    int ind = 0;
     for (const auto &b : buttons){
         b.draw();
     }
 
     pge.DrawRect(_pos, _size);
+}
+
+void InputMenu::update() {
+    //update list of buttons
+    if (sm.inputs.size() != input_buttons.size()){
+        olc::vi2d offs = {0, 12 + margin.y};
+        int ind = 0;
+        input_buttons.clear();
+
+        for (const auto &[id, input] : sm.inputs){
+            input_buttons.push_back(Button(pge, margin + (ind*offs), {_size.x - 2*margin.x, 12}, input.name, Button::TOGGLE));
+            input_buttons.back().mpos_offset = -_pos;
+            ind++;
+        }
+
+        for (auto &b : control_buttons){
+            b._pos = margin + (ind++*offs);
+        }
+    }
+
+
+    for (auto &b : input_buttons){
+        b.update();
+    }
+
+    int i1 = 0;
+    for (auto &b : input_buttons){
+        if (b.register_update()){
+            int i2 = 0;
+            for (auto &b2 : input_buttons){
+                if (i1 != i2++)
+                    b2.draw_state = Button::NONE;
+            }
+        }
+        i1++;
+    }
+
+
+    for (auto &b : control_buttons){
+        b.update();
+    }
+}
+
+void InputMenu::draw() const {
+    olc::Sprite state_canvas(_size.x, _size.y);
+    pge.SetDrawTarget(&state_canvas);
+
+    for (const auto &b : input_buttons){
+        b.draw();
+    }
+    for (const auto &b : control_buttons){
+        b.draw();
+    }
+
+    pge.SetDrawTarget(nullptr);
+    pge.DrawSprite(_pos, &state_canvas);
+    pge.DrawRect(_pos, _size);
+}
+
+std::optional<olc::vf2d> InputMenu::screen_to_canvas(olc::vf2d screen_pos) const {
+    olc::vf2d offset = screen_pos - _pos;
+
+    if (offset.x < 0.0f || offset.y < 0.0f) return std::nullopt;
+    if (offset.x > _size.x || offset.y > _size.y) return std::nullopt;
+
+    return offset;
 }
 
 std::optional<olc::vf2d> StateCanvas::screen_to_canvas(olc::vf2d screen_pos) const {
@@ -344,9 +407,11 @@ bool SmeagolGUI::OnUserUpdate(float fElapsedTime) {
     Clear(olc::BLACK);
     sc.update();
     bp.update();
+    im.update();
 
     sc.draw();
     bp.draw();
+    im.draw();
 
     return true;
 }

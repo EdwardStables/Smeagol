@@ -34,11 +34,14 @@ struct Button {
 
     std::string name;
     olc::PixelGameEngine& pge;
-    const olc::vi2d _pos;
-    const olc::vi2d _size;
+    olc::vi2d _pos;
+    olc::vi2d _size;
     e_button_type type;
     enum {NONE, HOVER, SELECT} draw_state = NONE;
     bool button_pressed = false;
+
+    //kinda a hack
+    olc::vi2d mpos_offset = {0,0};
 
     Button(
         olc::PixelGameEngine& pge,
@@ -87,6 +90,38 @@ public:
     void draw() const;
 };
 
+class InputMenu {
+    olc::PixelGameEngine& pge;
+    e_mode& mode;
+    StateManager& sm;
+    const olc::vi2d _pos;
+    const olc::vi2d _size;
+
+    std::vector<Button> input_buttons;
+    std::vector<Button> control_buttons;
+    const olc::vi2d margin = {5,5};
+
+public:
+    InputMenu(
+        olc::PixelGameEngine& pge,
+        e_mode& mode,
+        StateManager& sm,
+        olc::vi2d pos,
+        olc::vi2d size
+    ) : pge(pge), mode(mode), sm(sm), _pos(pos), _size(size)
+    {
+        olc::vi2d offs = {0, 12 + margin.y};
+        int ind = 0;
+        control_buttons.push_back(Button(pge, margin + (ind*offs), {_size.x - 2*margin.x, 12}, "+", Button::MOMENTRY));
+        control_buttons.back().mpos_offset = -_pos;
+    }
+    void update();
+    void draw() const;
+    olc::vf2d size() {return _size;}
+    olc::vf2d pos() {return _pos;}
+    std::optional<olc::vf2d> screen_to_canvas(olc::vf2d screen_pos) const;
+};
+
 class StateCanvas {
     olc::PixelGameEngine& pge;
     e_mode& mode;
@@ -117,16 +152,18 @@ public:
 
 class SmeagolGUI : public olc::PixelGameEngine {
     StateManager& sm;
-    StateCanvas sc;
     ButtonPanel bp;
+    StateCanvas sc;
+    InputMenu im;
     e_mode mode = NORMAL;
     std::unordered_map<StateID, GUIState> states;
 
 public:
     SmeagolGUI(StateManager& sm)
     : sm(sm),
-      sc(StateCanvas(*this, mode, sm, {200,0}, {599, 399}, states)),
-      bp(ButtonPanel(*this, mode, sm, {0,0}, {199, 399}))
+      bp(ButtonPanel(*this, mode, sm, {0,0}, {199, 399})),
+      sc(StateCanvas(*this, mode, sm, {200,0}, {399, 399}, states)),
+      im(InputMenu(*this, mode, sm, {600,0}, {199, 399}))
     {
         sAppName = "Smeagol";
     }
