@@ -136,3 +136,5 @@ public:
 };
 
 void run_gui(StateManager& sm);
+
+float point_to_line_distance(olc::vf2d line_point1, olc::vf2d line_point2, olc::vf2d test_point);

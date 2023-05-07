@@ -255,21 +255,32 @@ void StateCanvas::draw() const {
         for (const auto &[id2, label]: connection){
             auto p1 = state.pos;
             auto p2 = states.at(id2).pos;
-            pge.DrawLine(p1, p2);
-            pge.DrawString(p1 + (p2-p1)/2 - pge.GetTextSize(label)/2, label);
-
             auto po = p2 + (p1 - p2).norm() * states.at(id2).radius;
+
+            olc::Pixel colour = olc::WHITE;
+            if (mode == DELETE_STATE){
+                auto mpos = screen_to_canvas(pge.GetMousePos());
+                if (mpos){
+                    float mouse_distance = point_to_line_distance(p1, po, mpos.value());
+                    if (mouse_distance < 2){
+                        colour = olc::RED;
+                    }
+                }
+            }
 
             auto perp = (po - p1).norm();
             perp = olc::vf2d{perp.y, -perp.x}.norm();
 
+            pge.DrawLine(p1, p2, colour);
+            pge.DrawString(p1 + (p2-p1)/2 - pge.GetTextSize(label)/2, label, colour);
+
             auto p3 = p1 + perp*(po - p1).mag();
             auto p3vec = (p3 - po).norm()*10;
-            pge.DrawLine(po, po+p3vec);
+            pge.DrawLine(po, po+p3vec, colour);
 
             auto p4 = p1 - perp*(po - p1).mag();
             auto p4vec = (p4 - po).norm()*10;
-            pge.DrawLine(po, po+p4vec);
+            pge.DrawLine(po, po+p4vec, colour);
 
         }
     }
@@ -318,3 +329,16 @@ void run_gui(StateManager& sm)
         gui.Start();
 }
 
+
+float point_to_line_distance(olc::vf2d p1, olc::vf2d p2, olc::vf2d p0){
+    if (
+        (p1.x <= p0.x && p0.x <= p2.x) || (p2.x <= p0.x && p0.x <= p1.x) &&
+        (p1.y <= p0.y && p0.y <= p2.y) || (p2.y <= p0.y && p0.y <= p1.y)
+    ){
+        float num = abs((p2.x - p1.x)*(p1.y - p0.y) - (p1.x - p0.x)*(p2.y-p1.y));
+        float den = sqrt(pow(p2.x - p1.x, 2) + pow(p2.y - p1.y, 2));
+        return num/den;
+    }
+
+    return std::min((p0-p1).mag(), (p0-p2).mag());
+}
