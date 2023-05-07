@@ -36,6 +36,12 @@ void StateManager::connect(StateID initial, StateID result, InputID input){
     assert(inputs.count(input));
     transitions[initial][input].insert(result);
 }
+void StateManager::delete_connection(StateID initial, StateID result, InputID input){
+    if (!transitions.count(initial)) return;
+    if (!transitions[initial].count(input)) return;
+    if (!transitions[initial][input].count(result)) return;
+    transitions[initial][input].erase(result);
+}
 
 std::string StateManager::summary_string(){
     std::string out;

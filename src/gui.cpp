@@ -176,6 +176,35 @@ void StateCanvas::update() {
                     } else {
                         state.draw_state = GUIState::NONE;
                     }
+
+                    if(!pge.GetMouse(0).bPressed) break;
+                    if(!sm.transitions.count(id)) break;
+
+                    //mouse pressed this frame
+                    std::vector<std::pair<InputID,StateID>> inputs;
+                    for (const auto &[input_id, target_ids] : sm.transitions.at(id)){
+                        for (const auto &target_id: target_ids){
+                            inputs.push_back({input_id, target_id});
+                        }
+                    }
+
+                    std::vector<std::tuple<StateID,StateID,InputID>> to_delete;
+                    for (const auto &[input, target]: inputs){
+                        auto p1 = state.pos;
+                        auto p2 = states.at(target).pos;
+                        auto po = p2 + (p1 - p2).norm() * states.at(target).radius;
+
+                        auto mpos = screen_to_canvas(pge.GetMousePos());
+                        if (mpos){
+                            float mouse_distance = point_to_line_distance(p1, po, mpos.value());
+                            if (mouse_distance < 2){
+                                to_delete.push_back({id, target, input});
+                            }
+                        }
+                    }
+                    for (const auto &[origin, target, input] : to_delete){
+                        sm.delete_connection(origin, target, input);
+                    }
                     break;
                 }
                 case NORMAL: {

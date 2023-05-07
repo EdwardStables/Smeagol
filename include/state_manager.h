@@ -21,5 +21,6 @@ struct StateManager {
     void delete_state(StateID id);
     InputID add_input(std::string name);
     void connect(StateID initial, StateID result, InputID input);
+    void delete_connection(StateID initial, StateID result, InputID input);
     std::string summary_string();
 };
