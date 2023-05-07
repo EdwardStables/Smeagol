@@ -101,6 +101,9 @@ class InputMenu {
     std::vector<Button> control_buttons;
     const olc::vi2d margin = {5,5};
 
+    std::vector<InputID> ordered_ids;
+    std::optional<int> selected_id;
+
 public:
     InputMenu(
         olc::PixelGameEngine& pge,
@@ -120,12 +123,17 @@ public:
     olc::vf2d size() {return _size;}
     olc::vf2d pos() {return _pos;}
     std::optional<olc::vf2d> screen_to_canvas(olc::vf2d screen_pos) const;
+    std::optional<StateID> selected_input() const {
+        if (!selected_id) return std::nullopt;
+        return ordered_ids[selected_id.value()];
+    }
 };
 
 class StateCanvas {
     olc::PixelGameEngine& pge;
     e_mode& mode;
     StateManager& sm;
+    InputMenu& im;
     std::unordered_map<StateID, GUIState>& states;
     const olc::vi2d _pos;
     const olc::vi2d _size;
@@ -138,10 +146,11 @@ public:
         olc::PixelGameEngine& pge,
         e_mode& mode,
         StateManager& sm,
+        InputMenu& im,
         olc::vi2d pos,
         olc::vi2d size,
         std::unordered_map<StateID, GUIState>& states
-    ) : pge(pge), mode(mode), sm(sm), _pos(pos), _size(size), states(states)
+    ) : pge(pge), mode(mode), sm(sm), im(im), _pos(pos), _size(size), states(states)
     {}
     void update();
     void draw() const;
@@ -153,8 +162,8 @@ public:
 class SmeagolGUI : public olc::PixelGameEngine {
     StateManager& sm;
     ButtonPanel bp;
-    StateCanvas sc;
     InputMenu im;
+    StateCanvas sc;
     e_mode mode = NORMAL;
     std::unordered_map<StateID, GUIState> states;
 
@@ -162,8 +171,8 @@ public:
     SmeagolGUI(StateManager& sm)
     : sm(sm),
       bp(ButtonPanel(*this, mode, sm, {0,0}, {199, 399})),
-      sc(StateCanvas(*this, mode, sm, {200,0}, {399, 399}, states)),
-      im(InputMenu(*this, mode, sm, {600,0}, {199, 399}))
+      im(InputMenu(*this, mode, sm, {600,0}, {199, 399})),
+      sc(StateCanvas(*this, mode, sm, im, {200,0}, {399, 399}, states))
     {
         sAppName = "Smeagol";
     }

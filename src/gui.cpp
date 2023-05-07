@@ -128,10 +128,12 @@ void InputMenu::update() {
         olc::vi2d offs = {0, 12 + margin.y};
         int ind = 0;
         input_buttons.clear();
+        ordered_ids.clear();
 
         for (const auto &[id, input] : sm.inputs){
             input_buttons.push_back(Button(pge, margin + (ind*offs), {_size.x - 2*margin.x, 12}, input.name, Button::TOGGLE));
             input_buttons.back().mpos_offset = -_pos;
+            ordered_ids.push_back(id);
             ind++;
         }
 
@@ -150,16 +152,27 @@ void InputMenu::update() {
         if (b.register_update()){
             int i2 = 0;
             for (auto &b2 : input_buttons){
-                if (i1 != i2++)
-                    b2.draw_state = Button::NONE;
+                if (i1 != i2++) b2.draw_state = Button::NONE;
             }
+        }
+        if (b.draw_state == Button::SELECT){
+            selected_id = i1;
         }
         i1++;
     }
 
 
+    i1 = 0;
     for (auto &b : control_buttons){
         b.update();
+        if (b.register_update()){
+            switch(i1){
+                case 0 : {
+                    sm.add_input("Test input");
+                    break;
+                }
+            }
+        }
     }
 }
 
@@ -215,11 +228,12 @@ void StateCanvas::update() {
                             if (!connection_mode_start){ //first node
                                 connection_mode_start = id;
                             } else if (id != connection_mode_start.value()) {  //second node
-                                InputID a = sm.add_input("test_connection");
-                                sm.connect(connection_mode_start.value(), id, a);
-                                states.at(connection_mode_start.value()).draw_state = GUIState::NONE;
-                                state.draw_state = GUIState::NONE;
-                                connection_mode_start = std::nullopt;
+                                if (im.selected_input()){
+                                    sm.connect(connection_mode_start.value(), id, im.selected_input().value());
+                                    states.at(connection_mode_start.value()).draw_state = GUIState::NONE;
+                                    state.draw_state = GUIState::NONE;
+                                    connection_mode_start = std::nullopt;
+                                }
 
                             }
                         }
